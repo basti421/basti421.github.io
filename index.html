@@ -4,9 +4,11 @@
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.15.1/dist/phaser-arcade-physics.min.js"></script>
 </head>
 <style>
-td {background-color: #grey; text-align: center; width: 90px; height: 90px}
-td.field {background-color: #F8C471;}
+td {background-color: #grey; text-align: center; width: 20%; height:0px; padding-bottom: 20%;}
+td.field {background-color: #F8C471; position: relative;}
 td.centerfield {background-color: #FDEBD0; text-align: left}
+section.fieldsection {position: absolute;}
+button.dicebutton {width: stretch}
 </style>
 <body style="background-color: grey" >
 <h1>Title</h1>
@@ -14,9 +16,9 @@ td.centerfield {background-color: #FDEBD0; text-align: left}
 
 </p>
 <p>
-  <table>
+  <table width="100%">
     <tr>
-      <td class="field">X<br/>X<br/>X<br/>X</td>
+      <td class="field"><section class="fieldsection">X<br/>X<br/>X<br/>X</section></td>
       <td class="field"></td>
       <td class="field"></td>
       <td class="field"></td>
@@ -25,7 +27,7 @@ td.centerfield {background-color: #FDEBD0; text-align: left}
     <tr>
       <td class="field"></td>
       <td></td>
-      <td>   <button style="width: 50px; height: 50px">Dice</button></td>
+      <td><section class="fieldsection"><button class="dicebutton">Dice</button></section></td>
       <td></td>
       <td class="field"></td>
     </tr>
@@ -33,11 +35,13 @@ td.centerfield {background-color: #FDEBD0; text-align: left}
       <td class="field"></td>
       <td></td>
       <td class="centerfield">
+        <section class="fieldsection">
         <section style="background-color: blue; color: yellow "; id="C1">C1: </section>
         <section style="background-color: green; color: yellow "; id="C2">C2: </section>
         <section style="background-color: red; color: yellow "; id="C3">C3: </section>
         <section style="background-color: purple; color: yellow "; id="C4">C4: </section>
         <section style="background-color: grey; color: yellow "; id="C5">C5: </section>
+        </section>
       </td>
       <td></td>
       <td class="field"></td>
