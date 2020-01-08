@@ -7,8 +7,8 @@ td {background-color: #grey; text-align: center; width: 20%; height:0px; padding
 td.field {background-color: #F8C471; position: relative; }
 td.centerfield {background-color: #grey; text-align: left; padding-bottom: 0%}
 section.fieldsection {position:absolute; }
-.buttonsection {position: absolute; width:100%; }
-.dicebutton {text-align: center; font-size: 10em}
+.buttonsection {position: absolute; width:100%; touch-action: manipulation; }
+.dicebutton {text-align: center; font-size: 10em;}
 .diceresultdiv {font-size: 3em; font-family: sans-serif; height:20%; color: white; text-align: center; vertical-align: middle;}
 .camelPiece {
 	border-left: 30px solid transparent;
@@ -83,8 +83,12 @@ section.fieldsection {position:absolute; }
 </section>
 
 <script>
-var camels = new Array (0,0,0,0,0);
+var camelsField = new Array (0,0,0,0,0);
 var roundNumber = 1;
+
+
+
+
 
 function getRndInteger(min, max) {
   return Math.floor(Math.random() * (max - min + 1) ) + min;
@@ -95,38 +99,38 @@ function refreshCamelResults()
 
 document.getElementById("roundLabel").innerHTML = "Round: " + roundNumber;
 
-  if (camels[0] == 0) {
+  if (camelsField[0] == 0) {
         document.getElementById("c0").innerHTML = "";
   }
   else {
-        document.getElementById("c0").innerHTML = camels[0];
+        document.getElementById("c0").innerHTML = camelsField[0];
   }
 
-  if (camels[1] == 0) {
+  if (camelsField[1] == 0) {
         document.getElementById("c1").innerHTML = "";
   }
   else {
-        document.getElementById("c1").innerHTML = camels[1];
+        document.getElementById("c1").innerHTML = camelsField[1];
   }
 
-  if (camels[2] == 0) {
+  if (camelsField[2] == 0) {
         document.getElementById("c2").innerHTML = "";
   }
   else {
-        document.getElementById("c2").innerHTML = camels[2];
+        document.getElementById("c2").innerHTML = camelsField[2];
   }
 
-  if (camels[3] == 0) {
+  if (camelsField[3] == 0) {
         document.getElementById("c3").innerHTML = "";
   }
   else {
-        document.getElementById("c3").innerHTML = camels[3];
+        document.getElementById("c3").innerHTML = camelsField[3];
   }
-  if (camels[4] == 0) {
+  if (camelsField[4] == 0) {
         document.getElementById("c4").innerHTML = "";
   }
   else {
-        document.getElementById("c4").innerHTML = camels[4];
+        document.getElementById("c4").innerHTML = camelsField[4];
   }
 }
 
@@ -136,9 +140,9 @@ function diceButtonClicked()
 {
   // Get number of available camels
   availableCamels = new Array();
-  for(var i=0; i<camels.length;++i)
+  for(var i=0; i<camelsField.length;++i)
   {
-    if (camels[i] == 0)
+    if (camelsField[i] == 0)
     {
         availableCamels.push(i);
     }
@@ -147,7 +151,7 @@ function diceButtonClicked()
   var res = getRndInteger(0,availableCamels.length-1);
   var camelId = availableCamels[res];
   var resDice = getRndInteger(1,3);
-  camels[camelId] = resDice;
+  camelsField[camelId] = resDice;
   refreshCamelResults();
 
 
@@ -157,9 +161,9 @@ function diceButtonClicked()
     // start new round (TODO)
 
     // clear all results
-    for(var i=0; i<camels.length;++i)
+    for(var i=0; i<camelsField.length;++i)
     {
-      camels[i] = 0;
+      camelsField[i] = 0;
     }
     roundNumber++;
   }
