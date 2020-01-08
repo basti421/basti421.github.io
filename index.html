@@ -9,6 +9,7 @@ td.centerfield {background-color: #grey; text-align: left; padding-bottom: 0%}
 section.fieldsection {position:absolute; }
 .buttonsection {position: absolute; width:100%; touch-action: manipulation; }
 .dicebutton {text-align: center; font-size: 10em;}
+.fartbutton {text-align: center; font-size: 10em;}
 .diceresultdiv {font-size: 3em; font-family: sans-serif; height:20%; color: white; text-align: center; vertical-align: middle;}
 .camelPiece {
 	border-left: 30px solid transparent;
@@ -80,16 +81,18 @@ section.fieldsection {position:absolute; }
 </p>
 <section class="buttonsection">
 <button id="IdDiceButton" class="dicebutton" onclick="diceButtonClicked()">Dice</button>
-<button class="dicebutton" onclick="fartClicked()" >Fart</button>
+<button class="fartbutton" onclick="fartClicked()" >Fart</button>
 </section>
 
 <script>
 var camelsField = new Array (0,0,0,0,0);
 var roundNumber = 1;
+var fartAudio = new Audio('https://basti421.github.io/fart-01.mp3');
 
-
-
-
+function fartClicked()
+{
+	fartAudio.play();
+}
 
 function getRndInteger(min, max) {
   return Math.floor(Math.random() * (max - min + 1) ) + min;
