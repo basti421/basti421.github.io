@@ -4,12 +4,25 @@
 </head>
 <style>
 td {background-color: #grey; text-align: center; width: 20%; height:0px; padding-bottom: 20%;}
-td.field {background-color: #F8C471; position: relative;}
+td.field {background-color: #F8C471; position: relative; }
 td.centerfield {background-color: #grey; text-align: left; padding-bottom: 0%}
-section.fieldsection {position: absolute; }
+section.fieldsection {position:absolute; }
 .buttonsection {position: absolute; width:100%; }
 .dicebutton {text-align: center; font-size: 10em}
 .diceresultdiv {font-size: 3em; font-family: sans-serif; height:20%; color: white; text-align: center; vertical-align: middle;}
+.camelPiece {
+	border-left: 30px solid transparent;
+	border-right: 30px solid transparent;
+	height: 0;
+	width: 100%;
+}
+#camelPiece0 {  border-bottom: 30px solid #900B00;}
+#camelPiece1 { border-bottom: 30px solid #009001;}
+#camelPiece2 {  border-bottom: 30px solid #000F96;}
+#camelPiece3 { border-bottom: 30px solid #960089;}
+#camelPiece4 { border-bottom: 30px solid #444444;}
+
+
 #roundLabel {font-size: 2em; font-family: sans-serif;}
 #c0 {background-color: #900B00;}
 #c1 {background-color: #009001; }
@@ -25,7 +38,13 @@ section.fieldsection {position: absolute; }
 <p>
   <table width="100%">
     <tr>
-      <td class="field"><section class="fieldsection">X<br/>X<br/>X<br/>X</section></td>
+      <td class="field"><section id="field1" class="fieldsection">
+        <div class="camelPiece" id="camelPiece0"></div>
+        <div class="camelPiece" id="camelPiece1"></div>
+        <div class="camelPiece" id="camelPiece2"></div>
+        <div class="camelPiece" id="camelPiece3"></div>
+        <div class="camelPiece" id="camelPiece4"></div>
+      </section></td>
       <td class="field"></td>
       <td class="field"></td>
       <td class="field"></td>
@@ -111,6 +130,8 @@ document.getElementById("roundLabel").innerHTML = "Round: " + roundNumber;
   }
 }
 
+
+
 function diceButtonClicked()
 {
   // Get number of available camels
@@ -129,6 +150,7 @@ function diceButtonClicked()
   camels[camelId] = resDice;
   refreshCamelResults();
 
+
   if (availableCamels.length == 1)
   {
     // this was last camel to move!
@@ -141,7 +163,6 @@ function diceButtonClicked()
     }
     roundNumber++;
   }
-  debugger;
 }
 </script>
 
