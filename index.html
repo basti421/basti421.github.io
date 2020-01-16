@@ -2,7 +2,7 @@
 
 <head>
     <meta charset="utf-8">
-    <title>Resize HTML5 canvas dynamically | www.htmlcheats.com</title>
+    <title>bla</title>
     <style>
     html, body {
       width: 100%;
@@ -20,64 +20,92 @@
     </canvas>
 
     <script>
-        // Obtain a reference to the canvas element using its id.
-        var htmlCanvas = document.getElementById('c'),
-        // Obtain a graphics context on the canvas element for drawing.
-        context = htmlCanvas.getContext('2d');
-
+       var canvas = document.getElementById('c'),
+       ctx = canvas.getContext('2d');
 			 var borderColor = 'yellow';
+
+			  circles = [
+			   {
+			     x: 150,
+			     y: 150,
+			     radius: 90,
+			     color: 'rgb(255,0,0)',
+					 id:0
+			   },
+			   {
+			     x: 250,
+			     y: 500,
+			     radius: 180,
+			     color: 'rgb(0,255,0)',
+					 id:1
+			   }
+			 ];
+
 
 			 // Start listening to resize events and draw canvas.
        initialize();
 
-
-
-       function initialize() {
-           // Register an event listener to call the resizeCanvas() function
-           // each time the window is resized.
+			 function initialize() {
            window.addEventListener('resize', resizeCanvas, false);
-           // Draw canvas border for the first time.
            resizeCanvas();
+
+					 canvas.addEventListener('click', (e) => {
+						 const pos = {
+							 x: e.clientX,
+							 y: e.clientY
+						 };
+						 //alert('clicked on ' + x + '|' + y);
+						 //alert('click');
+						 circles.forEach(circle => {
+							 if (isIntersect(pos, circle))
+							 {
+								 clickedCircle(circle.id);
+							 }
+						 });
+					 });
+
         }
+
+				function getRndInteger(min, max) {
+				  return Math.floor(Math.random() * (max - min + 1) ) + min;
+				}
+
+				function clickedCircle(id)
+				{
+					getRndInteger(0,255);
+					circles[id].color= "rgb(" + getRndInteger(0,255) + "," +getRndInteger(0,255) + "," +getRndInteger(0,255) + ")";
+					redraw();
+					//alert('ha');
+				}
+
+			 function resizeCanvas() {
+					 canvas.width = window.innerWidth;
+					 canvas.height = window.innerHeight;
+					 redraw();
+			 }
+
+			 function isIntersect(point, circle) {
+			   return Math.sqrt((point.x-circle.x) ** 2 + (point.y - circle.y) ** 2) < circle.radius;
+			 }
 
         // Display custom canvas. In this case it's a blue, 5 pixel
         // border that resizes along with the browser window.
         function redraw() {
-          context.strokeStyle = borderColor;
-          context.lineWidth = '10';
-          context.strokeRect(0, 0, window.innerWidth, window.innerHeight);
-					context.beginPath();
- 				 	context.arc(150, 150, 100, 0, 2 * Math.PI, false);
-					context.fillStyle = borderColor;
-					context.fill();
-					context.addHitRegion({id: "bigGreen"});
+          ctx.strokeStyle = borderColor;
+          ctx.lineWidth = '10';
+          ctx.strokeRect(0, 0, window.innerWidth, window.innerHeight);
+
+					// draw circles
+	  			circles.forEach(circle => {
+	 	 			ctx.beginPath();
+	 	 		ctx.arc(circle.x, circle.y, circle.radius, 0, 2 * Math.PI, false);
+	 	 		ctx.fillStyle = circle.color;
+	 	 		ctx.fill();
+	  			});
+
         }
 
 
-				htmlCanvas.onclick = function (event)
-				{
-				    if (event.region)
-						{
-
-							if (event.region) {
-							alert('You clicked ' + event.region);
-							}
-
-							if (borderColor == 'yellow')
-								borderColor = 'blue';
-							else
-								borderColor = 'yellow';
-				    }
-						redraw();
-				}
-        // Runs each time the DOM window resize event fires.
-        // Resets the canvas dimensions to match window,
-        // then draws the new borders accordingly.
-        function resizeCanvas() {
-            htmlCanvas.width = window.innerWidth;
-            htmlCanvas.height = window.innerHeight;
-            redraw();
-        }
 
     </script>
 </body>
