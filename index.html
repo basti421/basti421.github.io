@@ -23,7 +23,7 @@
        var canvas = document.getElementById('c'),
        ctx = canvas.getContext('2d');
 			 var borderColor = 'yellow';
-       var smallerdim = 1; // is set to the smaller of widht and height during resize event
+       var smallerdim = 1; // is set to the smaller of width and height during resize event
 
 			  circles = [
 			   {
@@ -44,8 +44,13 @@
 			 ];
 
 
+
 			 // Start listening to resize events and draw canvas.
        initialize();
+
+//       startAnimation();
+// TODO: Check out animation stuff e.g.
+// https://www.mediaevent.de/javascript/requestAnimationFrame.html
 
 
 
