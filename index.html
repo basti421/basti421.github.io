@@ -23,19 +23,21 @@
        var canvas = document.getElementById('c'),
        ctx = canvas.getContext('2d');
 			 var borderColor = 'yellow';
+       var smallerdim = 1; // is set to the smaller of widht and height during resize event
 
 			  circles = [
 			   {
-			     x: 150,
-			     y: 150,
-			     radius: 90,
+			     x: 0.2,
+			     y: 0.85,
+			     radius: 0.15,
 			     color: 'rgb(0,0,125)',
 					 id:0
-			   },
+			   }
+         ,
 			   {
-			     x: 250,
-			     y: 500,
-			     radius: 180,
+			     x: 0.8,
+			     y: 0.85,
+			     radius: 0.15,
 			     color: 'rgb(0,255,0)',
 					 id:1
 			   }
@@ -61,7 +63,22 @@
 						 circles.forEach(circle => {
 							 if (isIntersect(pos, circle))
 							 {
-								 clickedCircle(circle.id);
+								 circleMouseDown(circle.id);
+							 }
+						 });
+					 });
+
+           canvas.addEventListener('mouseup', (e) => {
+						 const pos = {
+							 x: e.clientX,
+							 y: e.clientY
+						 };
+						 //alert('clicked on ' + x + '|' + y);
+						 //alert('click');
+						 circles.forEach(circle => {
+							 if (isIntersect(pos, circle))
+							 {
+								 circleMouseUp(circle.id);
 							 }
 						 });
 					 });
@@ -72,22 +89,31 @@
 				  return Math.floor(Math.random() * (max - min + 1) ) + min;
 				}
 
-				function clickedCircle(id)
+				function circleMouseDown(id)
 				{
 					getRndInteger(0,255);
 					circles[id].color= "rgb(" + getRndInteger(0,255) + "," +getRndInteger(0,255) + "," +getRndInteger(0,255) + ")";
+          circles[id].radius += 0.1;
 					redraw();
 					//alert('ha');
 				}
 
+        function circleMouseUp(id)
+        {
+          circles[id].radius -= 0.1;
+          redraw();
+          //alert('ha');
+        }
+
 			 function resizeCanvas() {
 					 canvas.width = window.innerWidth;
 					 canvas.height = window.innerHeight;
+           smallerdim = Math.min(window.innerWidth, window.innerHeight);
 					 redraw();
 			 }
 
 			 function isIntersect(point, circle) {
-			   return Math.sqrt((point.x-circle.x) ** 2 + (point.y - circle.y) ** 2) < circle.radius;
+			   return Math.sqrt((point.x-(circle.x*window.innerWidth)) ** 2 + (point.y - (circle.y*window.innerHeight)) ** 2) < (circle.radius*smallerdim);
 			 }
 
         // Display custom canvas. In this case it's a blue, 5 pixel
@@ -100,12 +126,14 @@
           ctx.rect(0, 0, window.innerWidth, window.innerHeight);
 					ctx.fill();
 
+
+
 					// draw circles
 	  			circles.forEach(circle => {
 	 	 			ctx.beginPath();
-	 	 		ctx.arc(circle.x, circle.y, circle.radius, 0, 2 * Math.PI, false);
-	 	 		ctx.fillStyle = circle.color;
-	 	 		ctx.fill();
+	 	 		  ctx.arc(circle.x*window.innerWidth, circle.y*window.innerHeight, circle.radius*smallerdim, 0, 2 * Math.PI, false);
+	 	 		  ctx.fillStyle = circle.color;
+	 	 		  ctx.fill();
 	  			});
 
         }
