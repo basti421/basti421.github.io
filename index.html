@@ -64,6 +64,21 @@
 						 });
 					 });
 
+					 canvas.addEventListener('touchstart', (e) => {
+						 const pos = {
+							 x: e.clientX,
+							 y: e.clientY
+						 };
+						 //alert('clicked on ' + x + '|' + y);
+						 //alert('click');
+						 circles.forEach(circle => {
+							 if (isIntersect(pos, circle))
+							 {
+								 clickedCircle(circle.id);
+							 }
+						 });
+					 });
+
         }
 
 				function getRndInteger(min, max) {
