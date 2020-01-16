@@ -24,10 +24,13 @@
         var htmlCanvas = document.getElementById('c'),
         // Obtain a graphics context on the canvas element for drawing.
         context = htmlCanvas.getContext('2d');
-       // Start listening to resize events and draw canvas.
-       initialize();
 
 			 var borderColor = 'yellow';
+
+			 // Start listening to resize events and draw canvas.
+       initialize();
+
+
 
        function initialize() {
            // Register an event listener to call the resizeCanvas() function
@@ -50,10 +53,16 @@
 					context.addHitRegion({id: "bigGreen"});
         }
 
+
 				htmlCanvas.onclick = function (event)
 				{
 				    if (event.region)
 						{
+
+							if (event.region) {
+							alert('You clicked ' + event.region);
+							}
+
 							if (borderColor == 'yellow')
 								borderColor = 'blue';
 							else
