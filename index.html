@@ -29,7 +29,7 @@
 			     x: 150,
 			     y: 150,
 			     radius: 90,
-			     color: 'rgb(255,0,0)',
+			     color: 'rgb(0,0,0)',
 					 id:0
 			   },
 			   {
@@ -45,26 +45,13 @@
 			 // Start listening to resize events and draw canvas.
        initialize();
 
+
+
 			 function initialize() {
            window.addEventListener('resize', resizeCanvas, false);
            resizeCanvas();
 
-					 canvas.addEventListener('click', (e) => {
-						 const pos = {
-							 x: e.clientX,
-							 y: e.clientY
-						 };
-						 //alert('clicked on ' + x + '|' + y);
-						 //alert('click');
-						 circles.forEach(circle => {
-							 if (isIntersect(pos, circle))
-							 {
-								 clickedCircle(circle.id);
-							 }
-						 });
-					 });
-
-					 canvas.addEventListener('touchstart', (e) => {
+					 canvas.addEventListener('mousedown', (e) => {
 						 const pos = {
 							 x: e.clientX,
 							 y: e.clientY
