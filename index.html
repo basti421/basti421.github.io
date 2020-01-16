@@ -33,6 +33,7 @@ html, body {
     };
 
     var game = new Phaser.Game(config);
+    var speed = 100;
 
     function preload ()
     {
@@ -40,6 +41,8 @@ html, body {
         this.load.image('logo', 'img/spark.png');
         this.load.image('red', 'img/spark.png');
     }
+
+var logo;
 
     function create ()
     {
@@ -51,9 +54,9 @@ html, body {
             blendMode: 'ADD'
         });
 
-        var logo = this.physics.add.image(50, 50, 'logo');
+        logo = this.physics.add.image(50, 50, 'logo');
 
-        logo.setVelocity(100, 200);
+        logo.setVelocity(speed, speed);
         logo.setBounce(1, 1);
         logo.setCollideWorldBounds(true);
 
@@ -62,12 +65,29 @@ html, body {
 
         logo.setInteractive().on('pointerdown', function(pointer, localX, localY, event)
         {
-            emitter.visible = true;
+          if ( emitter.visible == true )
+            emitter.visible = false ;
+            else
+            emitter.visible = true ;
+
+            speed+=100;
+            logo.setVelocity(speed, speed);
+
+            if (speed >= 1000)
+              explode();
         });
 
+        function explode()
+        {
+          logo.setVelocity(0, speed);
+          logo.setBounce(0,0);
+          emitter.visible = true ;
+        }
+
+/*
         logo.setInteractive().on('pointerup', function(pointer, localX, localY, event){
             emitter.visible = false;
-        })
+        })*/
 
 
     }
