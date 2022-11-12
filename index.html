@@ -57,26 +57,27 @@ var logo;
         logo = this.physics.add.image(10, 10, 'logo');
 
         logo.setVelocity(speed, speed);
-        logo.setBounce(1, 1);
+        //logo.setBounce(1, 1);
+        logo.setBounce(0, 0);
         logo.setCollideWorldBounds(true);
 
         emitter.startFollow(logo);
         emitter.visible = false;
 
-        logo.setInteractive().on('pointerdown', function(pointer, localX, localY, event)
+      /*  logo.setInteractive().on('pointerdown', function(pointer, localX, localY, event)
         {
           if ( emitter.visible == true )
             emitter.visible = false ;
             else
             emitter.visible = true ;
 
-            speed+=999;
+            speed+=100;
             logo.setVelocity(speed, speed);
 
             if (speed >= 1000)
               explode();
         });
-
+*/
         function explode()
         {
           logo.setVelocity(0, speed);
