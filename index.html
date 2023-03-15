@@ -1,99 +1,44 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="UTF-8">
-    <title>Dice Fart AI</title>
-    <style>
-      /* Define a CSS animation for the dice roll */
-      @keyframes roll {
-        0% { transform: translateX(0) rotateX(0) rotateY(0); }
-        30% { transform: translateX(80px) rotateX(360deg) rotateY(720deg); }
-        60% { transform: translateX(160px) rotateX(720deg) rotateY(1440deg); }
-        100% { transform: translateX(240px) rotateX(1080deg) rotateY(2160deg); }
-      }
+<head>
+	<title>Webcam Image Capture</title>
+</head>
+<body>
+	<button id="capture-btn">Capture Image</button>
+	<div id="image-container"></div>
 
-      /* Define CSS styles for the dice */
-      .dice {
-        width: 100px;
-        height: 100px;
-        border: 2px solid black;
-        border-radius: 10px;
-        margin: 10px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        font-size: 48px;
-        font-weight: bold;
-        animation: roll 1.5s ease-in-out;
-      }
+	<script>
+		const captureBtn = document.getElementById('capture-btn');
+		const imageContainer = document.getElementById('image-container');
 
-      /* Define a CSS animation for the explosion effect */
-      @keyframes explode {
-        0% { transform: scale(0); opacity: 1; }
-        100% { transform: scale(10); opacity: 0; }
-      }
+		captureBtn.addEventListener('click', () => {
+			const constraints = {
+				video: true
+			};
 
-      h1, button {
-        font-size: 500%;
-  height: 100%;
-  width: 100%
-  margin: 0;
-  padding: 0;
-}
-    </style>
-  </head>
-  <body>
-    <h1>Dice Fart AI</h1>
-    <button onclick="playFartSound(); explodePage()">Fart</button>
-    <button onclick="throwDice()">Throw Dice</button>
-    <div id="dice-result"></div>
+			navigator.mediaDevices.getUserMedia(constraints)
+				.then(stream => {
+					const video = document.createElement('video');
+					video.srcObject = stream;
+					video.play();
 
-    <script>
-      // Define a function to play the fart sound
-      function playFartSound() {
-        // Create an audio element and set its source to the fart sound file
-        var audio = new Audio('fart-01.mp3');
-        // Play the audio
-        audio.play();
-      }
+					const canvas = document.createElement('canvas');
+					canvas.width = video.videoWidth;
+					canvas.height = video.videoHeight;
 
-      // Define a function to throw a 6-sided dice and display the result
-      function throwDice() {
-        // Generate a random number between 1 and 6
-        var diceRoll = Math.floor(Math.random() * 6) + 1;
-        // Get the dice result element from the HTML
-        var diceResultElement = document.getElementById("dice-result");
-        // Clear any previous result
-        diceResultElement.innerHTML = "";
-        // Create a new dice element and set its value to the result
-        var diceElement = document.createElement("div");
-        diceElement.classList.add("dice");
-        diceElement.innerText = diceRoll;
-        // Add the dice element to the HTML
-        diceResultElement.appendChild(diceElement);
-      }
+					const context = canvas.getContext('2d');
+					context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
- function explodePage() {
-  // Get the HTML body element
-  var bodyElement = document.getElementsByTagName("body")[0];
-  // Create a new element for the explosion effect
-  var explosionElement = document.createElement("div");
-  explosionElement.style.position = "fixed";
-  explosionElement.style.top = "0";
-  explosionElement.style.left = "0";
-  explosionElement.style.width = "100%";
-  explosionElement.style.height = "100%";
-  explosionElement.style.background = "radial-gradient(circle, #FFC200, #FF8200, #FF4800, #FF0000)";
-  explosionElement.style.opacity = "0.9";
-  explosionElement.style.animation = "explode 1s ease-out";
-  // Add the explosion element to the HTML
-  bodyElement.appendChild(explosionElement);
-  // Remove the explosion element after the animation finishes
-  setTimeout(function() {
-    bodyElement.removeChild(explosionElement);
-  }, 1000);
-}
+					const image = document.createElement('img');
+					image.src = canvas.toDataURL('image/png');
+					imageContainer.appendChild(image);
 
-</script>
-  </body>
+					stream.getTracks().forEach(track => track.stop());
+				})
+				.catch(error => {
+					console.error(error);
+				});
+		});
+	</script>
+</body>
 </html>
