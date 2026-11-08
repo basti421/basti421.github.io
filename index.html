@@ -1,44 +1,243 @@
 <!DOCTYPE html>
-<html>
+<html lang="de">
 <head>
-	<title>Webcam Image Capture</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Kanji Vokabeltrainer</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f3f4f6;
+            margin: 0;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            width: 100%;
+            max-width: 600px;
+            margin-bottom: 20px;
+        }
+
+        button, .file-upload-label {
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            padding: 32px 36px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+            flex: 1 1 auto;
+        }
+
+        button:active, .file-upload-label:active {
+            background-color: #2563eb;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .card-container {
+            width: 100%;
+            max-width: 600px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            text-align: center;
+            padding: 40px 20px;
+            box-sizing: border-box;
+            cursor: pointer;
+            min-height: 490px;
+            display: flex;
+            flex-direction: column;
+            justify-content: top;
+            user-select: none; 
+        }
+
+        #side_a {
+            font-size: 5rem;
+            color: #1f2937;
+            margin-bottom: 20px;
+            word-break: break-all;
+            font-weight: bold;
+        }
+
+        #side_b {
+            font-size: 1.5rem;
+            color: #4b5563;
+            visibility: hidden; 
+        }
+
+        .show-answer #side_b {
+            visibility: visible;
+        }
+
+        #status {
+            margin-top: 15px;
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+    </style>
 </head>
 <body>
-	<button id="capture-btn">Capture Image</button>
-	<div id="image-container"></div>
 
-	<script>
-		const captureBtn = document.getElementById('capture-btn');
-		const imageContainer = document.getElementById('image-container');
+    <div class="toolbar">
+        <label class="file-upload-label">
+            📁 Datei laden
+            <input type="file" id="fileInput" accept=".txt">
+        </label>
+        <button id="btnOrder">⬇️ Reihenfolge</button>
+        <button id="btnShuffle">🔀 Mischen</button>
+        <button id="btnCopy">📋 Kopieren</button>
+        <!-- NEUER KNOPF HIER -->
+        <button id="btnWani">🦀 Wani</button>
+    </div>
+    
+    <div class="card-container" id="flashcard">
+        <div id="side_a">?</div>
+        <div id="side_b">Bitte lade zuerst deine Textdatei.</div>
+    </div>
 
-		captureBtn.addEventListener('click', () => {
-			const constraints = {
-				video: true
-			};
+    <div id="status">Karten geladen: 0</div>
+    <script>
+        let allCards = [];
+        let currentDeck = [];
+        let currentIndex = 0;
+        let isAnswerShown = false;
 
-			navigator.mediaDevices.getUserMedia(constraints)
-				.then(stream => {
-					const video = document.createElement('video');
-					video.srcObject = stream;
-					video.play();
+        const fileInput = document.getElementById('fileInput');
+        const flashcard = document.getElementById('flashcard');
+        const sideA = document.getElementById('side_a');
+        const sideB = document.getElementById('side_b');
+        const statusText = document.getElementById('status');
 
-					const canvas = document.createElement('canvas');
-					canvas.width = video.videoWidth;
-					canvas.height = video.videoHeight;
+        // Regex: Erfasst am Anfang (Gruppe 1) alles was Kanji, Hiragana, Katakana oder Leerzeichen/Tab ist.
+        // Der gesamte Rest der Zeile ab dem ersten Fremdzeichen landet in Gruppe 2.
+        const splitRegex = /^([\u4E00-\u9FAF\u3400-\u4DBF\u3040-\u309F\u30A0-\u30FF\s]+)(.*)/;
 
-					const context = canvas.getContext('2d');
-					context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        // --- DATEI EINLESEN ---
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
 
-					const image = document.createElement('img');
-					image.src = canvas.toDataURL('image/png');
-					imageContainer.appendChild(image);
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const lines = e.target.result.split(/\r?\n/);
+                allCards = [];
 
-					stream.getTracks().forEach(track => track.stop());
-				})
-				.catch(error => {
-					console.error(error);
-				});
-		});
-	</script>
+                lines.forEach(line => {
+                    const match = line.match(splitRegex);
+                    if (match) {
+                        let a = match[1].trim();
+                        let b = match[2].trim();
+                        
+                        if (a.length > 0) {
+                            allCards.push({ a: a, b: b });
+                        }
+                    }
+                });
+
+                if (allCards.length > 0) {
+                    currentDeck = [...allCards];
+                    currentIndex = 0;
+                    updateCard();
+                    statusText.innerText = `Karten geladen: ${allCards.length}`;
+                } else {
+                    alert("Keine Zeilen gefunden, die mit Kanji, Hiragana oder Katakana beginnen.");
+                }
+            };
+            reader.readAsText(file);
+        });
+
+        // --- KARTE ANZEIGEN ---
+        function updateCard() {
+            if (currentDeck.length === 0) return;
+            isAnswerShown = false;
+            flashcard.classList.remove('show-answer');
+            sideA.innerText = currentDeck[currentIndex].a;
+            sideB.innerText = currentDeck[currentIndex].b;
+        }
+
+        // --- LOGIK ZUM AUFLÖSEN / WEITERSPRINGEN ---
+        function handleAction() {
+            if (currentDeck.length === 0) return;
+            
+            if (!isAnswerShown) {
+                isAnswerShown = true;
+                flashcard.classList.add('show-answer');
+            } else {
+                currentIndex++;
+                if (currentIndex >= currentDeck.length) {
+                    currentIndex = 0;
+                    alert("Ende erreicht! Beginne wieder von vorne.");
+                }
+                updateCard();
+            }
+        }
+
+        // --- EVENTS FÜR MAUS/TOUCH & TASTATUR ---
+        flashcard.addEventListener('click', handleAction);
+        
+        document.addEventListener('keydown', function(e) {
+            if (e.key === ' ' || e.key === 'Enter') {
+                e.preventDefault();
+                handleAction();
+            }
+        });
+
+        // --- KNÖPFE STEUERUNG ---
+        document.getElementById('btnOrder').addEventListener('click', function() {
+            if (allCards.length === 0) return;
+            currentDeck = [...allCards];
+            currentIndex = 0;
+            updateCard();
+            statusText.innerText = "Sortierung: Original-Reihenfolge";
+        });
+
+        document.getElementById('btnShuffle').addEventListener('click', function() {
+            if (allCards.length === 0) return;
+            currentDeck = [...allCards];
+            for (let i = currentDeck.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [currentDeck[i], currentDeck[j]] = [currentDeck[j], currentDeck[i]];
+            }
+            currentIndex = 0;
+            updateCard();
+            statusText.innerText = "Sortierung: Gemischt (Zufall)";
+        });
+
+        document.getElementById('btnCopy').addEventListener('click', function() {
+            if (currentDeck.length === 0) return;
+            const textToCopy = currentDeck[currentIndex].a;
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                const btn = document.getElementById('btnCopy');
+                const originalText = btn.innerText;
+                btn.innerText = "✅ Kopiert!";
+                btn.style.backgroundColor = "#10b981";
+                setTimeout(() => {
+                    btn.innerText = originalText;
+                    btn.style.backgroundColor = "";
+                }, 1000);
+            });
+        });
+
+        // --- NEUE WANI-LOGIK ---
+        document.getElementById('btnWani').addEventListener('click', function() {
+            if (currentDeck.length === 0) return;
+            const currentKanji = currentDeck[currentIndex].a;
+            // encodeURIComponent stellt sicher, dass Sonderzeichen korrekt in die URL übernommen werden
+            const waniUrl = "https://www.wanikani.com/search?query=" + encodeURIComponent(currentKanji) + "&button=";
+            window.open(waniUrl, '_blank');
+        });
+    </script>
 </body>
 </html>
