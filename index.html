@@ -29,13 +29,16 @@
             background-color: #3b82f6;
             color: white;
             border: none;
-            padding: 32px 36px;
-            font-size: 16px;
+            /* Padding und Schriftgröße verkleinert für 3 Buttons nebeneinander auf Handys */
+            padding: 12px 8px;
+            font-size: 14px;
             border-radius: 8px;
             cursor: pointer;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             text-align: center;
-            flex: 1 1 auto;
+            /* flex-basis auf ca 30% gesetzt, damit 3 nebeneinander passen */
+            flex: 1 1 30%;
+            box-sizing: border-box;
         }
 
         button:active, .file-upload-label:active {
@@ -95,10 +98,10 @@
             📁 Datei laden
             <input type="file" id="fileInput" accept=".txt">
         </label>
-        <button id="btnOrder">⬇️ Reihenfolge</button>
-        <button id="btnShuffle">🔀 Mischen</button>
+        <button id="btnToggleOrder">🔀 Mischen</button>
+        <button id="btnSwitchDeck">📂 Extrastapel</button>
+        <button id="btnStack">➕ Stapeln</button>
         <button id="btnCopy">📋 Kopieren</button>
-        <!-- NEUER KNOPF HIER -->
         <button id="btnWani">🦀 Wani</button>
     </div>
     
@@ -110,19 +113,27 @@
     <div id="status">Karten geladen: 0</div>
     <script>
         let allCards = [];
+        let extraCards = []; // Der Extrastapel
+        
         let currentDeck = [];
         let currentIndex = 0;
+        
         let isAnswerShown = false;
+        let isShuffled = false;
+        let isExtraDeck = false; // Status, welcher Stapel gerade aktiv ist
 
         const fileInput = document.getElementById('fileInput');
         const flashcard = document.getElementById('flashcard');
         const sideA = document.getElementById('side_a');
         const sideB = document.getElementById('side_b');
         const statusText = document.getElementById('status');
+        
+        const btnSwitchDeck = document.getElementById('btnSwitchDeck');
+        const btnStack = document.getElementById('btnStack');
+        const btnToggleOrder = document.getElementById('btnToggleOrder');
 
-        // Regex: Erfasst am Anfang (Gruppe 1) alles was Kanji, Hiragana, Katakana oder Leerzeichen/Tab ist.
-        // Der gesamte Rest der Zeile ab dem ersten Fremdzeichen landet in Gruppe 2.
-        const splitRegex = /^([\u4E00-\u9FAF\u3400-\u4DBF\u3040-\u309F\u30A0-\u30FF\s]+)(.*)/;
+        // Regex: Erfasst am Anfang alles was Kanji, Hiragana, Katakana oder Leerzeichen/Tab ist.
+        const splitRegex = /^([~～\u4E00-\u9FAF\u3400-\u4DBF\u3040-\u309F\u30A0-\u30FF\s]+)(.*)/;
 
         // --- DATEI EINLESEN ---
         fileInput.addEventListener('change', function(e) {
@@ -133,6 +144,7 @@
             reader.onload = function(e) {
                 const lines = e.target.result.split(/\r?\n/);
                 allCards = [];
+                extraCards = []; // Extrastapel beim neuen Einlesen leeren
 
                 lines.forEach(line => {
                     const match = line.match(splitRegex);
@@ -147,10 +159,16 @@
                 });
 
                 if (allCards.length > 0) {
+                    isExtraDeck = false;
+                    btnSwitchDeck.innerText = "📂 Extrastapel";
+                    btnStack.innerText = "➕ Stapeln";
+                    
                     currentDeck = [...allCards];
                     currentIndex = 0;
+                    isShuffled = false;
+                    btnToggleOrder.innerText = "🔀 Mischen";
                     updateCard();
-                    statusText.innerText = `Karten geladen: ${allCards.length}`;
+                    statusText.innerText = `Hauptstapel geladen: ${allCards.length} (Sortierung: Original)`;
                 } else {
                     alert("Keine Zeilen gefunden, die mit Kanji, Hiragana oder Katakana beginnen.");
                 }
@@ -160,7 +178,11 @@
 
         // --- KARTE ANZEIGEN ---
         function updateCard() {
-            if (currentDeck.length === 0) return;
+            if (currentDeck.length === 0) {
+                sideA.innerText = "Leer";
+                sideB.innerText = "Keine Karten in diesem Stapel.";
+                return;
+            }
             isAnswerShown = false;
             flashcard.classList.remove('show-answer');
             sideA.innerText = currentDeck[currentIndex].a;
@@ -195,26 +217,108 @@
         });
 
         // --- KNÖPFE STEUERUNG ---
-        document.getElementById('btnOrder').addEventListener('click', function() {
-            if (allCards.length === 0) return;
-            currentDeck = [...allCards];
-            currentIndex = 0;
-            updateCard();
-            statusText.innerText = "Sortierung: Original-Reihenfolge";
-        });
+        
+        // Mischen / Reihenfolge (berücksichtigt nun den aktiven Stapel)
+        btnToggleOrder.addEventListener('click', function() {
+            if (currentDeck.length === 0) return;
+            
+            // Wähle die Basis-Karten je nach aktivem Stapel
+            const baseDeck = isExtraDeck ? extraCards : allCards;
 
-        document.getElementById('btnShuffle').addEventListener('click', function() {
-            if (allCards.length === 0) return;
-            currentDeck = [...allCards];
-            for (let i = currentDeck.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [currentDeck[i], currentDeck[j]] = [currentDeck[j], currentDeck[i]];
+            if (!isShuffled) {
+                // Mischen
+                currentDeck = [...baseDeck];
+                for (let i = currentDeck.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [currentDeck[i], currentDeck[j]] = [currentDeck[j], currentDeck[i]];
+                }
+                isShuffled = true;
+                btnToggleOrder.innerText = "⬇️ Reihenfolge";
+                statusText.innerText = `Sortierung: Gemischt (${currentDeck.length} Karten)`;
+            } else {
+                // Wieder in Original-Reihenfolge
+                currentDeck = [...baseDeck];
+                isShuffled = false;
+                btnToggleOrder.innerText = "🔀 Mischen";
+                statusText.innerText = `Sortierung: Original (${currentDeck.length} Karten)`;
             }
+            
             currentIndex = 0;
             updateCard();
-            statusText.innerText = "Sortierung: Gemischt (Zufall)";
         });
 
+        // Stapel wechseln
+        btnSwitchDeck.addEventListener('click', function() {
+            if (allCards.length === 0) return; // Nichts geladen
+
+            if (!isExtraDeck) {
+                // Wechsel zum Extrastapel
+                if (extraCards.length === 0) {
+                    alert("Der Extrastapel ist noch leer! Füge erst Karten mit 'Stapeln' hinzu.");
+                    return;
+                }
+                isExtraDeck = true;
+                btnSwitchDeck.innerText = "📁 Hauptstapel";
+                btnStack.innerText = "➖ Entstapeln";
+                
+                currentDeck = [...extraCards];
+            } else {
+                // Wechsel zum Hauptstapel
+                isExtraDeck = false;
+                btnSwitchDeck.innerText = "📂 Extrastapel";
+                btnStack.innerText = "➕ Stapeln";
+                
+                currentDeck = [...allCards];
+            }
+            
+            currentIndex = 0;
+            isShuffled = false;
+            btnToggleOrder.innerText = "🔀 Mischen";
+            updateCard();
+            
+            const deckName = isExtraDeck ? "Extrastapel" : "Hauptstapel";
+            statusText.innerText = `${deckName} aktiv: ${currentDeck.length} Karten`;
+        });
+
+        // Stapeln / Entstapeln
+        btnStack.addEventListener('click', function() {
+            if (currentDeck.length === 0) return;
+
+            if (!isExtraDeck) {
+                // Stapeln (hinzufügen)
+                const currentCard = currentDeck[currentIndex];
+                // Optional: Prüfen ob Karte schon drin ist (hier auskommentiert, erlaubt Duplikate)
+                // if (!extraCards.some(c => c.a === currentCard.a)) { ... }
+                extraCards.push(currentCard);
+                
+                const btnOriginalText = btnStack.innerText;
+                btnStack.innerText = "✅ Gestapelt!";
+                btnStack.style.backgroundColor = "#10b981"; // Grünes Feedback
+                setTimeout(() => {
+                    btnStack.innerText = btnOriginalText;
+                    btnStack.style.backgroundColor = "";
+                }, 800);
+                
+            } else {
+                // Entstapeln (entfernen)
+                extraCards.splice(currentIndex, 1);
+                
+                if (extraCards.length === 0) {
+                    alert("Der Extrastapel ist nun leer. Wechsel automatisch zurück zum Hauptstapel.");
+                    // Simuliere Klick auf Wechsel-Knopf
+                    btnSwitchDeck.click(); 
+                } else {
+                    if (currentIndex >= extraCards.length) {
+                        currentIndex = 0; // Zurück zum Anfang wenn letzte Karte gelöscht
+                    }
+                    currentDeck = [...extraCards];
+                    updateCard();
+                    statusText.innerText = `Extrastapel aktiv: ${currentDeck.length} Karten`;
+                }
+            }
+        });
+
+        // Kopieren
         document.getElementById('btnCopy').addEventListener('click', function() {
             if (currentDeck.length === 0) return;
             const textToCopy = currentDeck[currentIndex].a;
@@ -230,11 +334,10 @@
             });
         });
 
-        // --- NEUE WANI-LOGIK ---
+        // Wani
         document.getElementById('btnWani').addEventListener('click', function() {
             if (currentDeck.length === 0) return;
             const currentKanji = currentDeck[currentIndex].a;
-            // encodeURIComponent stellt sicher, dass Sonderzeichen korrekt in die URL übernommen werden
             const waniUrl = "https://www.wanikani.com/search?query=" + encodeURIComponent(currentKanji) + "&button=";
             window.open(waniUrl, '_blank');
         });
