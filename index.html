@@ -18,7 +18,7 @@
         .toolbar {
             display: flex;
             flex-wrap: wrap;
-            gap: 8px;
+            gap: 2px; /* Lücke stark verkleinert für ein fast nahtloses Design */
             justify-content: center;
             width: 100%;
             max-width: 600px;
@@ -29,14 +29,13 @@
             background-color: #3b82f6;
             color: white;
             border: none;
-            /* Padding und Schriftgröße verkleinert für 3 Buttons nebeneinander auf Handys */
-            padding: 12px 8px;
+            /* Vertikales Padding von 12px auf 18px erhöht für bessere Touch-Fläche */
+            padding: 33px 8px; 
             font-size: 14px;
             border-radius: 8px;
             cursor: pointer;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             text-align: center;
-            /* flex-basis auf ca 30% gesetzt, damit 3 nebeneinander passen */
             flex: 1 1 30%;
             box-sizing: border-box;
         }
@@ -200,7 +199,7 @@
                 currentIndex++;
                 if (currentIndex >= currentDeck.length) {
                     currentIndex = 0;
-                    alert("Ende erreicht! Beginne wieder von vorne.");
+                    //alert("Ende erreicht! Beginne wieder von vorne.");
                 }
                 updateCard();
             }
