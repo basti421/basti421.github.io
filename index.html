@@ -29,7 +29,7 @@
             background-color: #3b82f6;
             color: white;
             border: none;
-            /* Vertikales Padding von 12px auf 18px erhöht für bessere Touch-Fläche */
+            /* Vertikales Padding für bessere Touch-Fläche */
             padding: 33px 8px; 
             font-size: 14px;
             border-radius: 8px;
@@ -38,6 +38,8 @@
             text-align: center;
             flex: 1 1 30%;
             box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
         }
 
         button:active, .file-upload-label:active {
@@ -111,6 +113,9 @@
 
     <div id="status">Karten geladen: 0</div>
     <script>
+        const STORAGE_KEY_ALL = 'kanjiVocTrain_allCards';
+        const STORAGE_KEY_EXTRA = 'kanjiVocTrain_extraCards';
+
         let allCards = [];
         let extraCards = []; // Der Extrastapel
         
@@ -131,8 +136,72 @@
         const btnStack = document.getElementById('btnStack');
         const btnToggleOrder = document.getElementById('btnToggleOrder');
 
-        // Regex: Erfasst am Anfang alles was Kanji, Hiragana, Katakana oder Leerzeichen/Tab ist.
+        // Regex: Erfasst am Anfang alles was Kanji, Hiragana, Katakana, Tilde oder Leerzeichen/Tab ist.
         const splitRegex = /^([~～\u4E00-\u9FAF\u3400-\u4DBF\u3040-\u309F\u30A0-\u30FF\s]+)(.*)/;
+
+        // --- LOCAL STORAGE HELFER ---
+        function saveAllCardsToStorage() {
+            try {
+                localStorage.setItem(STORAGE_KEY_ALL, JSON.stringify(allCards));
+            } catch (err) {
+                console.warn("Konnte Hauptstapel nicht im Local Storage speichern:", err);
+            }
+        }
+
+        function saveExtraCardsToStorage() {
+            try {
+                if (extraCards.length > 0) {
+                    localStorage.setItem(STORAGE_KEY_EXTRA, JSON.stringify(extraCards));
+                } else {
+                    localStorage.removeItem(STORAGE_KEY_EXTRA);
+                }
+            } catch (err) {
+                console.warn("Konnte Extrastapel nicht im Local Storage speichern:", err);
+            }
+        }
+
+        function clearExtraCardsStorage() {
+            try {
+                localStorage.removeItem(STORAGE_KEY_EXTRA);
+            } catch (err) {
+                console.warn("Konnte Extrastapel nicht aus Local Storage löschen:", err);
+            }
+        }
+
+        function loadFromStorage() {
+            try {
+                const savedAll = localStorage.getItem(STORAGE_KEY_ALL);
+                const savedExtra = localStorage.getItem(STORAGE_KEY_EXTRA);
+
+                if (savedExtra) {
+                    const parsedExtra = JSON.parse(savedExtra);
+                    if (Array.isArray(parsedExtra)) {
+                        extraCards = parsedExtra;
+                    }
+                }
+
+                if (savedAll) {
+                    const parsedAll = JSON.parse(savedAll);
+                    if (Array.isArray(parsedAll) && parsedAll.length > 0) {
+                        allCards = parsedAll;
+                        isExtraDeck = false;
+                        btnSwitchDeck.innerText = "📂 Extrastapel";
+                        btnStack.innerText = "➕ Stapeln";
+
+                        currentDeck = [...allCards];
+                        currentIndex = 0;
+                        isShuffled = false;
+                        btnToggleOrder.innerText = "🔀 Mischen";
+                        updateCard();
+
+                        const extraInfo = extraCards.length > 0 ? ` | Extrastapel: ${extraCards.length}` : "";
+                        statusText.innerText = `Aus Speicher geladen: ${allCards.length} Karten${extraInfo}`;
+                    }
+                }
+            } catch (err) {
+                console.warn("Fehler beim Lesen aus dem Local Storage:", err);
+            }
+        }
 
         // --- DATEI EINLESEN ---
         fileInput.addEventListener('change', function(e) {
@@ -158,6 +227,10 @@
                 });
 
                 if (allCards.length > 0) {
+                    // Im Local Storage speichern / überschreiben
+                    saveAllCardsToStorage();
+                    clearExtraCardsStorage();
+
                     isExtraDeck = false;
                     btnSwitchDeck.innerText = "📂 Extrastapel";
                     btnStack.innerText = "➕ Stapeln";
@@ -171,6 +244,9 @@
                 } else {
                     alert("Keine Zeilen gefunden, die mit Kanji, Hiragana oder Katakana beginnen.");
                 }
+                
+                // Input zurücksetzen, damit dieselbe Datei bei Bedarf erneut geladen werden kann
+                fileInput.value = '';
             };
             reader.readAsText(file);
         });
@@ -199,7 +275,6 @@
                 currentIndex++;
                 if (currentIndex >= currentDeck.length) {
                     currentIndex = 0;
-                    //alert("Ende erreicht! Beginne wieder von vorne.");
                 }
                 updateCard();
             }
@@ -217,11 +292,10 @@
 
         // --- KNÖPFE STEUERUNG ---
         
-        // Mischen / Reihenfolge (berücksichtigt nun den aktiven Stapel)
+        // Mischen / Reihenfolge (berücksichtigt den aktiven Stapel)
         btnToggleOrder.addEventListener('click', function() {
             if (currentDeck.length === 0) return;
             
-            // Wähle die Basis-Karten je nach aktivem Stapel
             const baseDeck = isExtraDeck ? extraCards : allCards;
 
             if (!isShuffled) {
@@ -248,7 +322,7 @@
 
         // Stapel wechseln
         btnSwitchDeck.addEventListener('click', function() {
-            if (allCards.length === 0) return; // Nichts geladen
+            if (allCards.length === 0 && extraCards.length === 0) return;
 
             if (!isExtraDeck) {
                 // Wechsel zum Extrastapel
@@ -279,38 +353,107 @@
             statusText.innerText = `${deckName} aktiv: ${currentDeck.length} Karten`;
         });
 
-        // Stapeln / Entstapeln
+        // --- LANGER DRUCK FÜR ENTSTAPELN (EXTRASTAPEL KOMPLETT LEEREN) ---
+        let pressTimer = null;
+        let isLongPress = false;
+        const LONG_PRESS_DURATION = 700; // 0,7 Sekunden gedrückt halten
+
+        function startLongPress(e) {
+            if (!isExtraDeck || extraCards.length === 0) return;
+            isLongPress = false;
+            pressTimer = setTimeout(() => {
+                isLongPress = true;
+                if (navigator.vibrate) {
+                    navigator.vibrate(50);
+                }
+                const confirmed = confirm("Möchtest du den gesamten Extrastapel wirklich komplett leeren?");
+                if (confirmed) {
+                    extraCards = [];
+                    clearExtraCardsStorage();
+
+                    // Zurück zum Hauptstapel wechseln
+                    isExtraDeck = false;
+                    btnSwitchDeck.innerText = "📂 Extrastapel";
+                    btnStack.innerText = "➕ Stapeln";
+                    currentDeck = [...allCards];
+                    currentIndex = 0;
+                    isShuffled = false;
+                    btnToggleOrder.innerText = "🔀 Mischen";
+                    updateCard();
+                    statusText.innerText = `Extrastapel geleert. Hauptstapel aktiv: ${currentDeck.length} Karten`;
+                }
+            }, LONG_PRESS_DURATION);
+        }
+
+        function cancelLongPress() {
+            if (pressTimer) {
+                clearTimeout(pressTimer);
+                pressTimer = null;
+            }
+        }
+
+        btnStack.addEventListener('touchstart', startLongPress, { passive: true });
+        btnStack.addEventListener('touchend', cancelLongPress);
+        btnStack.addEventListener('touchmove', cancelLongPress);
+        btnStack.addEventListener('touchcancel', cancelLongPress);
+
+        btnStack.addEventListener('mousedown', function(e) {
+            if (e.button === 0) startLongPress(e);
+        });
+        btnStack.addEventListener('mouseup', cancelLongPress);
+        btnStack.addEventListener('mouseleave', cancelLongPress);
+
+        // Verhindert das Browser-Kontextmenü beim langen Drücken auf Entstapeln
+        btnStack.addEventListener('contextmenu', function(e) {
+            if (isExtraDeck) {
+                e.preventDefault();
+            }
+        });
+
+        // Stapeln / Entstapeln (kurzer Klick)
         btnStack.addEventListener('click', function() {
+            if (isLongPress) {
+                isLongPress = false;
+                return;
+            }
             if (currentDeck.length === 0) return;
 
             if (!isExtraDeck) {
                 // Stapeln (hinzufügen)
                 const currentCard = currentDeck[currentIndex];
-                // Optional: Prüfen ob Karte schon drin ist (hier auskommentiert, erlaubt Duplikate)
-                // if (!extraCards.some(c => c.a === currentCard.a)) { ... }
                 extraCards.push(currentCard);
+                saveExtraCardsToStorage();
                 
                 const btnOriginalText = btnStack.innerText;
                 btnStack.innerText = "✅ Gestapelt!";
                 btnStack.style.backgroundColor = "#10b981"; // Grünes Feedback
                 setTimeout(() => {
-                    btnStack.innerText = btnOriginalText;
+                    // Nur zurücksetzen, falls wir noch im Hauptstapel sind
+                    if (!isExtraDeck) {
+                        btnStack.innerText = btnOriginalText;
+                    }
                     btnStack.style.backgroundColor = "";
                 }, 800);
                 
             } else {
-                // Entstapeln (entfernen)
-                extraCards.splice(currentIndex, 1);
+                // Entstapeln (einzelne Karte entfernen)
+                const cardToRemove = currentDeck[currentIndex];
+                const idxInExtra = extraCards.indexOf(cardToRemove);
+                if (idxInExtra !== -1) {
+                    extraCards.splice(idxInExtra, 1);
+                } else {
+                    extraCards.splice(currentIndex, 1);
+                }
+                currentDeck.splice(currentIndex, 1);
+                saveExtraCardsToStorage();
                 
                 if (extraCards.length === 0) {
                     alert("Der Extrastapel ist nun leer. Wechsel automatisch zurück zum Hauptstapel.");
-                    // Simuliere Klick auf Wechsel-Knopf
                     btnSwitchDeck.click(); 
                 } else {
-                    if (currentIndex >= extraCards.length) {
-                        currentIndex = 0; // Zurück zum Anfang wenn letzte Karte gelöscht
+                    if (currentIndex >= currentDeck.length) {
+                        currentIndex = 0;
                     }
-                    currentDeck = [...extraCards];
                     updateCard();
                     statusText.innerText = `Extrastapel aktiv: ${currentDeck.length} Karten`;
                 }
@@ -340,6 +483,9 @@
             const waniUrl = "https://www.wanikani.com/search?query=" + encodeURIComponent(currentKanji) + "&button=";
             window.open(waniUrl, '_blank');
         });
+
+        // Beim Start der Seite gespeicherte Daten aus dem Local Storage laden
+        loadFromStorage();
     </script>
 </body>
 </html>
